@@ -8,7 +8,7 @@ Two open questions, both of which decide the session design:
      cannot free it. If deleting the Pangu session does not return the ~15 GB,
      CorrDiff cannot load in the same kernel and the notebook needs a restart
      between sections -- which is fine, but I have to write it that way.
-  B. What diffusion mode costs: 18 EDM/Heun steps x N samples on the Alps domain.
+  B. What diffusion mode costs: 18 EDM/Heun steps x N samples on the downscale domain.
 
 Run after cells 0-5 in a FRESH kernel.
 """
@@ -27,7 +27,7 @@ from earth2studio.io import XarrayBackend
 from earth2studio.utils.coords import map_coords
 
 REPORT = []
-BBOX = dict(lat_min=45.5, lat_max=49.5, lon_min=8.0, lon_max=16.5)
+BBOX = dict(lat_min=47.5, lat_max=51.2, lon_min=13.5, lon_max=18.5)  # keep in sync with cell 9
 N_SAMPLES = 4
 
 
@@ -109,7 +109,7 @@ for mode in ["mean", "diffusion"]:
         names = [str(v) for v in hcoords["variable"]]
         if mode == "mean":
             log("output variables", ",".join(names))
-        f = hires[0].float().cpu().numpy()  # (sample, time, variable, H, W)
+        f = hires.float().cpu().numpy()  # (sample, time, variable, H, W); no batch axis to drop
         if "tp" in names:
             tp = f[:, 0, names.index("tp")] * 1e3
             log(f"{mode}: precip max [mm]", f"{tp.max():.2f}")
