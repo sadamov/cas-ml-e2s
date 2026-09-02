@@ -1,7 +1,8 @@
 """Probe 3: can Pangu24 and CorrDiff diffusion coexist on one T4?
 
 Standalone copy of the notebook's "Instructor preflight" section, kept here so it
-can be run without opening the notebook. Keep BBOX / N_SAMPLES in sync with cell 9.
+can be run without opening the notebook. Keep BBOX in sync with the experiment-configuration cell in section 1;
+N_SAMPLES here is a deliberately small probe value.
 
 Pangu24 FITS (measured: 15.30/15.6 GB peak, 8 s/step, 24 h step, 1.10 GB ONNX).
 FengWu OOMed in the ORT arena; FCN3 and Atlas ruled out earlier.
@@ -30,7 +31,7 @@ from earth2studio.io import XarrayBackend
 from earth2studio.utils.coords import map_coords
 
 REPORT = []
-BBOX = dict(lat_min=45.9, lat_max=49.1, lon_min=12.2, lon_max=19.6)  # keep in sync with cell 9
+BBOX = dict(lat_min=45.9, lat_max=49.1, lon_min=12.2, lon_max=19.6)  # keep in sync with section 1
 N_SAMPLES = 4
 
 

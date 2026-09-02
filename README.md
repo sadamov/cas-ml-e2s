@@ -15,21 +15,23 @@ Slimmed down from [ai-models-ensembles](ai-models-ensembles/), reusing the same
 earth2studio patterns (registry -> data source -> rollout -> verification) with the HPC,
 Slurm, container and perturbation machinery stripped out.
 
-Course-facing files are the worksheet notebook, this README and `cached_outputs/` (the
-netCDF fallback for participants without a GPU). The solutions notebook and everything used
-to regenerate the cache on CSCS Alps (GH200 container, Slurm build, preflight probe, local
-pins) live in [`.instructor/`](.instructor/) and are not needed to run the worksheet.
+Course-facing files are the worksheet notebook, this README, [GLOSSARY.md](GLOSSARY.md) (every
+abbreviation used anywhere in the repo) and `cached_outputs/` (the netCDF fallback for
+participants without a GPU). The solutions notebook and everything used to regenerate the cache
+on CSCS Alps (GH200 container, Slurm build, preflight probe, local pins) live in
+[`.instructor/`](.instructor/) and are not needed to run the worksheet.
 
 ## Session structure
 
 | Section | Content | Budget |
 |---|---|---|
-| 0 | Runtime check, `earth2studio` install | 4 min |
-| 1 | ERA5 from ARCO, synoptic overview of the storm | 7 min |
-| 2 | Pangu-Weather (`Pangu24`), 6-step daily rollout | 10 min |
-| 3 | RMSE / ACC against persistence and climatology | 8 min |
-| 4 | CorrDiff ERA5 -> COSMO-REA2, hourly, mean + diffusion ensemble | 22 min |
-| 5 | Exercises | 3 min |
+| 0 | Runtime check, `earth2studio` install | 10 min |
+| 1 | ERA5 from ARCO, synoptic overview of the storm | 5 min |
+| 2 | Pangu-Weather (`Pangu24`), 6-step daily rollout | 15 min |
+| 3 | RMSE / ACC against persistence and climatology | 10 min |
+| 4 | CorrDiff ERA5 -> COSMO-REA2, hourly, mean + diffusion ensemble | 20 min |
+
+
 
 ## Model history (why Pangu24, not something else)
 
@@ -69,35 +71,32 @@ This is safe by construction, not by luck: `earth2studio.models.px.sfno`/`fcn3` 
 so `from earth2studio import run` (which eagerly imports every model in `models.px`) succeeds
 without either package installed -- the failure would only surface if `SFNO.load_model()` or
 `FCN3.load_model()` were actually called, which they no longer are. Confirmed by reading the
-source at the pinned `earth2studio==0.17.0`; **not yet re-verified end-to-end on hardware**, since
-Colab's free-tier GPU quota ran out mid-session. First thing to confirm on the next run: cell 7
-(`from earth2studio import run` etc.) still succeeds with the shorter install list.
+source at the pinned `earth2studio==0.17.0`, and verified end-to-end on a GH200: the shorter
+install list imports cleanly and the full notebook runs. The one place this could still bite is
+Colab-specific drift in the section-0 install (see below).
 
 ## Run this once before the class
 
-Two things are unverified on real hardware after the latest rewrite. Do a full dry run on a free
-T4 the day before.
+The full pipeline (Pangu24 rollout -> verification -> CorrDiff mean + hourly + 8-member diffusion
+ensemble) has been run end to end on a CSCS GH200, and `cached_outputs/` is the result of that
+run, so a no-GPU participant can replay every figure. What has *not* been re-checked is a free
+Colab **T4** specifically, so do a dry run there the day before. Things that behave differently on
+a T4 than on the GH200 the cache came from:
 
-1. **Do Pangu24 and CorrDiff (both modes) actually coexist in one kernel?** Two pieces are
-   separately confirmed, one is not:
-   - Pangu24 fits (12.37 GB peak) and **`onnxruntime` hands its memory back cleanly** on `del` +
-     `gc.collect()` + `torch.cuda.empty_cache()` -- measured: 12.37 GB -> 0.13 GB. So loading
-     CorrDiff afterwards in the same kernel is not blocked by ORT's arena.
-   - CorrDiff's forward pass previously crashed with
-     `Expected rope_cos/rope_sin of shape (H, W, 64), but got (128, 128, 64)`. Root cause, traced
-     to source: `nvidia-physicsnemo` 2.2.0 on PyPI refactored its DiT to prebuild RoPE tables and
-     source them from the per-call `attn_kwargs`, but `CorrDiffCosmoEra5.set_domain`'s rebind
-     mutates `attn_kwargs_forward` instead -- a dict the refactored code no longer reads. The fix
-     (now in cell 5) is to install physicsnemo from the exact git revision earth2studio's own
-     `[tool.uv.sources]` pins for the `cosmo` extra
-     (`ced75d93d014f70bb691372788eee2d201171c12`), which predates that refactor and still reads
-     `attn_kwargs_forward`. **This fix has not been re-run on a GPU** -- Colab quota ran out
-     immediately after applying it. This is the single most important thing to confirm before the
-     class: run `.instructor/preflight.py` end to end.
-   - Also unmeasured: diffusion-mode cost. 18 EDM/Heun sampler steps x `N_SAMPLES` (4 by default)
-     on top of whatever VRAM the mean-mode run and Pangu-session residue leave behind. If it OOMs
-     or is too slow for the session, drop to `resolution="rea6"` (6 km, smaller latent) and/or
-     lower `N_SAMPLES`.
+1. **Do Pangu24 and CorrDiff (both modes) coexist in one kernel on 16 GB?** On the GH200 (96 GB)
+   this is a non-issue; on a T4 it is tight. Confirmed pieces:
+   - Pangu24 peaks at 12.37 GB (2-step probe) and **`onnxruntime` hands its memory back cleanly**
+     on `del` + `gc.collect()` + `torch.cuda.empty_cache()` -- measured: 12.37 GB -> 0.13 GB -- so
+     loading CorrDiff afterwards in the same kernel is not blocked by ORT's arena.
+   - The `nvidia-physicsnemo` git pin (`ced75d93...`, cell 5) fixes the CorrDiff `set_domain`
+     RoPE-table crash (`Expected rope_cos/rope_sin of shape (H, W, 64)`): the PyPI 2.2.0 release
+     prebuilds the RoPE tables from the per-call `attn_kwargs`, but `set_domain`'s rebind mutates
+     `attn_kwargs_forward`, which the refactored code no longer reads. The pinned revision predates
+     that refactor. Verified on the GH200 run; `.instructor/preflight.py` reproduces the check.
+   - Diffusion-mode cost: 18 sampler steps x `N_SAMPLES` (8 by default). On the GH200, 8 samples
+     over the cropped `DOWNSCALE_BBOX` took ~7 min. On a T4 this is the most likely thing to OOM or
+     overrun the budget -- drop to `resolution="rea6"` (6 km, smaller latent) and/or a lower
+     `N_SAMPLES`, or just replay the committed cache.
 2. **Is there a `natten` wheel for Colab's current torch?** Section 0 resolves the wheel URL from
    <https://whl.natten.org/> at install time (matching torch, CUDA and Python ABI) rather than
    pinning a version, so it self-adjusts to most Colab drift -- but not all of it. NATTEN
@@ -161,8 +160,8 @@ from GCS every time later cells touch the same time/variable combination.
 
 All in the configuration cell in section 1:
 
-- `QUICK = True` drops to a 72 h forecast (3 daily steps) and `N_SAMPLES = 2`, for a first test
-  run.
+- `QUICK = True` drops to a 72 h forecast (3 daily steps) and a 4-member diffusion ensemble
+  (`N_SAMPLES, N_SHOW = 4, 2`), for a first test run.
 - `INIT`, `LEAD_HOURS` - the Pangu forecast experiment (`NSTEPS = LEAD_HOURS // 24`).
 - `LAT_RANGE`, `LON_RANGE` - the verification and plotting window.
 - `DOWNSCALE_RES` - `"rea2"` (2.2 km) or `"rea6"` (6 km, cheaper -- useful if diffusion mode is
@@ -170,8 +169,10 @@ All in the configuration cell in section 1:
 - `DOWNSCALE_TIME` - the anchor hour (peak of the event); `DOWNSCALE_TIMES` (the six-hour sequence
   for the temporal-resolution demo) and the diffusion-ensemble hour are both derived from it, not
   set independently.
-- `DOWNSCALE_BBOX` - the Alpine crop. Must sit inside the COSMO-REA footprint; the default is
-  comfortably inside the `rea2` native grid. `set_domain` raises a clear `ValueError` if a bbox
-  reaches outside it, so widening this live is safe to try.
+- `DOWNSCALE_BBOX` - the downscaling crop, over the eastern Alpine rim and Bohemia. Its southern
+  and eastern edges sit in COSMO-REA2's extended margin, so `set_domain` prints a one-time
+  out-of-distribution warning (not fatal). Pushing much further south or east eventually leaves the
+  `rea2` footprint and errors; shrinking it is always safe and makes the diffusion ensemble
+  cheaper.
 - `N_SAMPLES` - CorrDiff diffusion-ensemble size (section 4). Cost scales linearly with it (each
   sample is a full 18-step sampler run).
