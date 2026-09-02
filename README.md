@@ -1,4 +1,4 @@
-# CAS ML - AI Weather Forecasting and Downscaling Session
+# CAS ML - AI Weather Forecasting and Downscaling
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sadamov/cas-ml-e2s/blob/main/storm_boris_ai_forecast.ipynb)
 
