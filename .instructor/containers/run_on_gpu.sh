@@ -6,8 +6,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-srun --account=ab016 --partition=normal --nodes=1 --ntasks=1 \
-     --gpus-per-task=1 --cpus-per-task=32 --mem=200G --time=01:00:00 \
+srun --account=ab016 --partition=debug --nodes=1 --ntasks=1 \
+     --gpus-per-task=1 --cpus-per-task=32 --mem=200G --time=01:30:00 \
      --environment="$(pwd)/containers/cas-ml.toml" \
      bash -lc '
 set -e
@@ -23,7 +23,7 @@ o = natten.functional.na2d(q, q, q, kernel_size=3)
 print("natten", natten.__version__, "na2d ok", tuple(o.shape))
 PY
 jupyter nbconvert --to notebook --execute --inplace \
-    --ExecutePreprocessor.timeout=1800 storm_boris_ai_forecast.ipynb
+    --ExecutePreprocessor.timeout=1800 .instructor/storm_boris_ai_forecast_solutions.ipynb
 echo "=== cached_outputs/ ==="
 ls -lh cached_outputs/
 '

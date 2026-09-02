@@ -21,5 +21,5 @@ fully worked, pre-rendered version is
 | 1       | ERA5 from ARCO, synoptic overview of the storm                 | 5 min  |
 | 2       | Pangu-Weather (`Pangu24`), 6-step daily rollout              | 15 min |
 | 3       | RMSE / ACC against persistence and climatology                 | 10 min |
-| 4       | CorrDiff ERA5 -> COSMO-REA2, hourly, mean + diffusion ensemble | 20 min |
+| 4       | CorrDiff ERA5 -> COSMO-REA2, hourly animation, mean + diffusion ensemble | 20 min |
 | 5       | Exercises (take-home)                                          | 30 min |
