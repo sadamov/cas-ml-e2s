@@ -1,5 +1,7 @@
 # CAS ML - AI weather forecasting session
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sadamov/cas-ml-e2s/blob/main/storm_boris_ai_forecast.ipynb)
+
 [storm_boris_ai_forecast.ipynb](storm_boris_ai_forecast.ipynb) is a one-hour Google Colab
 session built for a free-tier **T4 GPU**. It runs a **Pangu-Weather** daily forecast of Storm
 Boris (September 2024) from ERA5, verifies it, and downscales ERA5 to **2.2 km, hourly** over
