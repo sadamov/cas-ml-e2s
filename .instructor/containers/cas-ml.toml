@@ -1,0 +1,16 @@
+# enroot/pyxis environment for the cas-ml-e2s container.
+#   srun --environment=./.instructor/containers/cas-ml.toml python preflight.py
+# or copy to ~/.edf/cas-ml.toml and use  --environment=cas-ml
+image = "/capstor/store/cscs/mch/s83/sadamov/cas-ml-e2s/cas-ml.sqsh"
+workdir = "/users/sadamov/pyprojects/cas-ml-e2s"
+mounts = [
+    "/users",
+    "/capstor",
+    "/iopsstor",
+]
+writable = true
+
+[env]
+EARTH2STUDIO_CACHE = "/iopsstor/scratch/cscs/sadamov/tmp/earth2studio-cache"
+EARTH2STUDIO_PACKAGE_TIMEOUT = "1800"
+HDF5_USE_FILE_LOCKING = "FALSE"

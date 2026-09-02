@@ -5,9 +5,20 @@ session built for a free-tier **T4 GPU**. It runs a **Pangu-Weather** daily fore
 Boris (September 2024) from ERA5, verifies it, and downscales ERA5 to **2.2 km, hourly** over
 the Alps with CorrDiff -- including a small diffusion-sampled ensemble.
 
+The notebook at the repo root is the **worksheet**: six code cells are blanked to a `# TODO`
+plus a hint for participants to complete (the rollout call, latitude-weighted RMSE, the
+persistence baseline, `set_domain`, `map_coords`, the ensemble size, the spread map). The
+fully worked, pre-rendered version is
+[`.instructor/storm_boris_ai_forecast_solutions.ipynb`](.instructor/storm_boris_ai_forecast_solutions.ipynb).
+
 Slimmed down from [ai-models-ensembles](ai-models-ensembles/), reusing the same
 earth2studio patterns (registry -> data source -> rollout -> verification) with the HPC,
 Slurm, container and perturbation machinery stripped out.
+
+Course-facing files are the worksheet notebook, this README and `cached_outputs/` (the
+netCDF fallback for participants without a GPU). The solutions notebook and everything used
+to regenerate the cache on CSCS Alps (GH200 container, Slurm build, preflight probe, local
+pins) live in [`.instructor/`](.instructor/) and are not needed to run the worksheet.
 
 ## Session structure
 
@@ -82,7 +93,7 @@ T4 the day before.
      (`ced75d93d014f70bb691372788eee2d201171c12`), which predates that refactor and still reads
      `attn_kwargs_forward`. **This fix has not been re-run on a GPU** -- Colab quota ran out
      immediately after applying it. This is the single most important thing to confirm before the
-     class: run the instructor preflight cell (last cell in the notebook) end to end.
+     class: run `.instructor/preflight.py` end to end.
    - Also unmeasured: diffusion-mode cost. 18 EDM/Heun sampler steps x `N_SAMPLES` (4 by default)
      on top of whatever VRAM the mean-mode run and Pangu-session residue leave behind. If it OOMs
      or is too slow for the session, drop to `resolution="rea6"` (6 km, smaller latent) and/or
@@ -134,11 +145,13 @@ temporal texture rather than a single frozen instant. Diffusion mode is reserved
 steps per sample -- so combining "every hour" with "every sample" was cut on time-budget grounds,
 not technical ones; that combination is exercise 3.
 
-**Why the domain stays Alps+Austria+Bohemia rather than Switzerland alone.** Boris's extreme
-rainfall fell mostly over Czechia, Austria and Poland, not Switzerland. The current
-`DOWNSCALE_BBOX` (45.5-49.5 N, 8-16.5 E) is a compromise that reaches both the Alps and that
-rainfall. Narrowing it to Switzerland is a one-line change and a fine live demo, but shows a less
-dramatic slice of the actual event.
+**Why the domain sits over the eastern Alps and Bohemia rather than Switzerland alone.** Boris's
+extreme rainfall fell mostly over Czechia, Austria and Poland, not Switzerland. The current
+`DOWNSCALE_BBOX` (45.9-49.1 N, 12.2-19.6 E) frames the northern-Alps rim and that rainfall
+band; the northern 40% of an earlier, taller box was cropped because the `rea2` diffusion
+ensemble cost scales with the cell count (a full `rea2` run over the taller box was ~19 min on a
+GH200, roughly hours on a T4). Narrowing it to Switzerland is a one-line change and a fine live
+demo, but shows a less dramatic slice of the actual event.
 
 **Why the `Cache` wrapper.** Not about ensemble members any more (Pangu is a single deterministic
 run) -- it exists so the same ERA5 slice (e.g. the forecast initial condition) is not re-fetched
