@@ -6,9 +6,10 @@ to regenerate `../cached_outputs/*.nc` and re-render the notebook before class.
 
 - `storm_boris_ai_forecast_solutions.ipynb` - the fully worked, pre-rendered notebook.
   The root `../storm_boris_ai_forecast.ipynb` is byte-identical to this file except
-  for six cells blanked to a `# TODO` plus a hint: the `run.deterministic` call,
-  `wrmse` + `persistence`, `set_domain`, `map_coords`, `number_of_samples`, `spread`.
-  Edit either notebook, then port the change to the other so only those six cells differ.
+  for the section-0 intro cell and six cells blanked to the `# TODO` hint that this
+  file keeps above the worked answer: the `run.deterministic` call, `wrmse` +
+  `persistence`, `set_domain`, `map_coords`, `number_of_samples`, `spread`.
+  Edit either notebook, then port the change to the other so only those cells differ.
 - `containers/` - GH200 container that runs Pangu24 + CorrDiff for real.
   - `cas-ml.dockerfile` - NGC PyTorch 26.01 base + natten (SM 9.0, from source),
     onnxruntime-gpu 1.26.0 (from source, no aarch64 wheel exists), earth2studio
